@@ -1,0 +1,71 @@
+# Default configuration for the safe constrained MAPPO study.
+data:
+  path: "data/EC_EV_dataset.xlsx"
+  households: 25          # stratified subset preserving the PV/BESS/EV mix
+  subset_seed: 0
+
+env:
+  n_envs: 8               # parallel episodes per update (legacy code used 1)
+  noise_std: 0.02         # per-episode multiplicative load/PV perturbation
+  include_evs: true
+  residual: true          # policy emits a correction to the rule-based controller
+  residual_scale: 0.15    # overwritten by the trust-region curriculum
+  residual_price_scale: 0.15
+  market_mechanism: "uniform"   # uniform-price double auction; or "midpoint"
+  p2p_fee: 0.01
+  bess_min_soc: 0.10
+  bess_max_soc: 0.95
+  bess_degradation_eur_per_kwh: 0.02
+  feeder_import_kw_per_hh: 8.0
+  feeder_export_kw_per_hh: 5.0
+  unserved_price_multiple: 3.0
+  ev_safety_projection: true
+  ev_safety_margin_kwh: 0.5
+  state_augmented: true     # A/B tested: KEPT. Lower cost and zero unserved.
+  lam_max_obs: 20.0
+  carbon_aware: true
+  w_econ: 1.0
+  w_team: 0.30
+  w_shape: 0.25
+  w_ev_shortfall: 2.0
+  w_terminal_fairness: 8.0
+  w_terminal_ir: 8.0
+  gamma: 0.99             # must match algo.gamma for potential-based shaping
+
+algo:
+  hidden_size: 128
+  attention_heads: 4
+  critic: "attention"     # or "mlp" for the no-attention ablation
+  layer_norm: true
+  log_std_init: -1.0
+  learning_rate_actor: 0.0003
+  learning_rate_critic: 0.001
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_range: 0.2
+  value_clip_range: 0.2
+  entropy_coef: 0.01
+  entropy_coef_final: 0.001
+  max_grad_norm_actor: 0.5
+  max_grad_norm_critic: 1.0
+  ppo_epochs: 6
+  num_minibatches: 4
+  target_kl: 0.02
+  anneal_lr: true
+  normalize_obs: true
+  normalize_value: true
+  per_agent_advantage: true
+  shared_reward: false
+  use_lagrangian: true
+  safety_critic: false      # A/B tested: neutral-to-worse. Kept as an ablation.
+  lam_sample_prob: 0.0      # A/B tested: worse on a short budget.
+
+train:
+  updates: 150
+  n_envs: 8
+  eval_every: 15
+  eval_episodes: 8
+  residual_scale_start: 0.15
+  residual_scale_final: 1.0
+  residual_anneal_frac: 0.5
+  log_every: 25
